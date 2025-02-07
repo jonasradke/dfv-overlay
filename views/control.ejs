@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Control</title>
+    <style>
+      /* Base Variables */
+      :root {
+        --bg: #111;
+        --container-bg: rgba(17, 17, 17, 0.95);
+        --text-color: #f0f0f0;
+        --input-bg: #222;
+        --input-border: #444;
+        --primary-btn: #0070f3;
+        --primary-btn-hover: #005ce6;
+        --start-btn: #28a745;
+        --start-btn-hover: #218838;
+        --pause-btn: #ffc107;
+        --pause-btn-hover: #e0a800;
+        --reset-btn: #dc3545;
+        --reset-btn-hover: #c82333;
+        --preset-btn: #6f42c1;
+        --preset-btn-hover: #5a32a3;
+        --team-bg: #0f172a;
+        --score-bg: #cbd5e1;
+        --timer-bg: #f9f7f7;
+        --control-panel-bg: rgba(17, 17, 17, 0.9);
+      }
+      /* Global Styles */
+      body {
+        margin: 0;
+        height: 100vh;
+        width: 100vw;
+        font-family: 'Inter', sans-serif;
+        color: var(--text-color);
+        background: var(--bg);
+        overflow: auto;
+        position: relative;
+        font-size: 16px;
+      }
+      .vercel-container {
+        max-width: 1000px;
+        margin: 40px auto;
+        padding: 30px;
+        background: var(--container-bg);
+        border-radius: 16px;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+        text-align: center;
+        position: relative;
+        z-index: 1;
+        animation: fadeInPage 0.7s ease-out;
+      }
+      @keyframes fadeInPage {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      h1 {
+        margin-bottom: 20px;
+        font-size: 2.5rem;
+        font-weight: 600;
+      }
+      .toggle-btn {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: var(--primary-btn);
+        border: none;
+        border-radius: 8px;
+        color: #fff;
+        padding: 10px 16px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: background-color 0.2s ease, transform 0.2s ease;
+        z-index: 2;
+      }
+      .toggle-btn:hover {
+        background: var(--primary-btn-hover);
+        transform: scale(1.05);
+      }
+      /* Preview Window (mirrors stream overlay) */
+      .preview-window {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: auto auto;
+        width: 100%;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      .preview-window .team,
+      .preview-window .score {
+        padding: 10px;
+        margin: 0;
+        border-radius: 0;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .preview-window .team {
+        background-color: var(--team-bg);
+        color: #fff;
+        font-size: 1.5rem;
+      }
+      .preview-window .score {
+        background-color: var(--score-bg);
+        color: var(--team-bg);
+        font-size: 2rem;
+        font-weight: bold;
+      }
+      .preview-window .timer {
+        grid-column: 2 / 3;
+        grid-row: 2 / 3;
+        width: 100%;
+      }
+      .preview-window .clock {
+        background-color: var(--timer-bg);
+        color: var(--team-bg);
+        padding: 10px;
+        font-size: 1.8rem;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0;
+        width: 100%;
+      }
+      /* Timer Controls (only if a game is selected) */
+      .timer-controls {
+        margin-top: 20px;
+        animation: fadeInControls 0.5s ease-out 0.5s forwards;
+      }
+      @keyframes fadeInControls {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .form-group {
+        margin-bottom: 20px;
+        text-align: left;
+      }
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        font-size: 1rem;
+      }
+      select,
+      input[type="text"],
+      input[type="number"] {
+        width: 100%;
+        padding: 14px 12px;
+        background-color: var(--input-bg);
+        color: var(--text-color);
+        border: 1px solid var(--input-border);
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: border-color 0.2s ease;
+      }
+      select:focus,
+      input[type="text"]:focus,
+      input[type="number"]:focus {
+        border-color: var(--primary-btn);
+        outline: none;
+      }
+      /* Action Buttons */
+      .action-btn, .open-modal-btn {
+        padding: 14px 28px;
+        font-size: 1.1rem;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.2s ease, transform 0.2s ease;
+        margin-top: 20px;
+      }
+      .start-btn {
+        background-color: var(--start-btn);
+      }
+      .start-btn:hover {
+        background-color: var(--start-btn-hover);
+      }
+      .pause-btn {
+        background-color: var(--pause-btn);
+      }
+      .pause-btn:hover {
+        background-color: var(--pause-btn-hover);
+      }
+      .reset-btn {
+        background-color: var(--reset-btn);
+      }
+      .reset-btn:hover {
+        background-color: var(--reset-btn-hover);
+      }
+      .preset-btn {
+        background-color: var(--preset-btn);
+      }
+      .preset-btn:hover {
+        background-color: var(--preset-btn-hover);
+      }
+      .open-modal-btn {
+        background-color: var(--primary-btn);
+        color: #fff;
+      }
+      .open-modal-btn:hover {
+        background-color: var(--primary-btn-hover);
+        transform: scale(1.03);
+      }
+      .timer-buttons button {
+        padding: 12px 24px;
+        font-size: 1rem;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        margin-right: 10px;
+      }
+      /* Modal Styles */
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 2000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.5);
+      }
+      .modal-content {
+        background-color: var(--container-bg);
+        margin: 8% auto;
+        padding: 30px;
+        border: 1px solid var(--input-border);
+        border-radius: 12px;
+        max-width: 600px;
+        text-align: center;
+        animation: fadeInModal 0.5s ease-out;
+      }
+      @keyframes fadeInModal {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+      }
+      .close {
+        color: var(--text-color);
+        float: right;
+        font-size: 1.8rem;
+        font-weight: bold;
+        cursor: pointer;
+      }
+      .close:hover,
+      .close:focus {
+        color: var(--primary-btn);
+        text-decoration: none;
+      }
+      .notification {
+        margin-top: 15px;
+        padding: 10px;
+        font-size: 1rem;
+        background-color: var(--primary-btn);
+        color: #fff;
+        border-radius: 6px;
+        display: none;
+      }
+      .animate-in {
+        animation: fadeIn 0.5s ease-out;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      /* Utility class to hide elements */
+      .hidden {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <% 
+      // Modified helper: abbreviate team name to first three letters (preserve " II" if present) in uppercase
+      function formatTeam(name) {
+        if (!name) return "";
+        name = name.trim();
+        if (name.toUpperCase().endsWith(" II")) {
+          let main = name.slice(0, -3).trim();
+          return main.substring(0, 3).toUpperCase() + " II";
+        } else {
+          return name.substring(0, 3).toUpperCase();
+        }
+      }
+
+      // Safely define a local variable for 'match' so we don't reference an undefined variable
+      let myMatch = (typeof match !== "undefined" && match) ? match : null;
+    %>
+    
+    <!-- Toggle Theme Button (so themeToggle is not null) -->
+    <button class="toggle-btn" id="themeToggle">Toggle Theme</button>
+    
+    <div class="vercel-container">
+      <h1>Control</h1>
+      
+      <!-- Preview Window (mirrors stream overlay) -->
+      <div id="previewArea">
+        <% if (selectedGame) { %>
+          <div class="preview-window">
+            <div class="team" id="previewHome">
+              <h2><%= formatTeam(myMatch ? myMatch.teams.home : "Home Team") %></h2>
+            </div>
+            <div class="score">
+              <span id="previewHomeScore"><%= myMatch ? myMatch.scores.home : "0" %></span> –
+              <span id="previewAwayScore"><%= myMatch ? myMatch.scores.away : "0" %></span>
+            </div>
+            <div class="team" id="previewAway">
+              <h2><%= formatTeam(myMatch ? myMatch.teams.away : "Away Team") %></h2>
+            </div>
+            <div class="timer">
+              <div class="clock" id="previewTimer">00:00</div>
+            </div>
+          </div>
+        <% } else { %>
+          <p>No game selected.</p>
+        <% } %>
+      </div>
+
+      <!-- Timer Controls (only shown if a game is selected) -->
+      <% if (selectedGame) { %>
+        <div class="timer-controls">
+          <h2>Timer Controls</h2>
+          <div class="form-group">
+            <label>Mode:</label>
+            <label><input type="radio" name="timerMode" value="countdown" checked /> Count Down</label>
+            <label><input type="radio" name="timerMode" value="countup" /> Count Up</label>
+          </div>
+          <div class="form-group" id="presetGroup">
+            <label for="presetInput">Countdown Preset (mm:ss):</label>
+            <input type="text" id="presetInput" value="05:00" />
+            <button id="setPreset" class="action-btn preset-btn">Set Preset</button>
+          </div>
+          <div class="form-group timer-buttons">
+            <button id="startTimer" class="action-btn start-btn">Start</button>
+            <button id="pauseTimer" class="action-btn pause-btn">Pause</button>
+            <button id="resetTimer" class="action-btn reset-btn">Reset</button>
+          </div>
+        </div>
+      <% } %>
+
+      <!-- Open Modal Button -->
+      <button id="openModalBtn" class="open-modal-btn">
+        <%= selectedGame ? "Change Game" : "Select Game" %>
+      </button>
+    </div>
+
+    <!-- Modal Popup for Game Selection -->
+    <div id="modal" class="modal">
+      <div class="modal-content">
+        <span id="closeModalBtn" class="close">&times;</span>
+        <h2>Select Game</h2>
+        <div class="form-group">
+          <label for="leagueSelect">Pick League:</label>
+          <select id="leagueSelect">
+            <option value="" disabled selected>Choose League</option>
+            <% leagues.forEach(l => { %>
+              <option value="<%= l.id %>"><%= l.title %></option>
+            <% }) %>
+          </select>
+        </div>
+        <!-- Hidden by default; shown when a league is selected -->
+        <div class="form-group hidden" id="matchSelectContainer">
+          <label for="matchSelect">Pick Match:</label>
+          <select id="matchSelect">
+            <option value="" disabled selected>Choose Match</option>
+          </select>
+        </div>
+        <button id="setGameBtn" class="action-btn">Set Game</button>
+        <div id="notification" class="notification"></div>
+      </div>
+    </div>
+
+    <script>
+      // Modal handling
+      const modal = document.getElementById('modal');
+      const openModalBtn = document.getElementById('openModalBtn');
+      const closeModalBtn = document.getElementById('closeModalBtn');
+      const notification = document.getElementById('notification');
+
+      openModalBtn.addEventListener('click', () => {
+        modal.style.display = 'block';
+      });
+      closeModalBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+      });
+      window.addEventListener('click', (event) => {
+        if (event.target == modal) {
+          modal.style.display = 'none';
+        }
+      });
+
+      // THEME TOGGLE CODE
+      // -----------------
+      const themeToggle = document.getElementById('themeToggle');
+      function applyTheme(theme) {
+        document.body.classList.remove('light-mode', 'dark-mode');
+        document.body.classList.add(theme);
+      }
+      const storedTheme = localStorage.getItem('theme');
+      if (storedTheme) {
+        applyTheme(storedTheme);
+      }
+      themeToggle.addEventListener('click', () => {
+        if (document.body.classList.contains('light-mode')) {
+          applyTheme('dark-mode');
+          localStorage.setItem('theme', 'dark-mode');
+        } else {
+          applyTheme('light-mode');
+          localStorage.setItem('theme', 'light-mode');
+        }
+      });
+
+      // Animate in match selection when a league is selected
+      const leagueSelect = document.getElementById('leagueSelect');
+      const matchSelect = document.getElementById('matchSelect');
+      const matchSelectContainer = document.getElementById('matchSelectContainer');
+
+      leagueSelect.addEventListener('change', async () => {
+        matchSelect.innerHTML = '<option disabled selected>Loading...</option>';
+        const r = await fetch(`/matches/${leagueSelect.value}`);
+        if (!r.ok) {
+          matchSelect.innerHTML = '<option>Failed to load</option>';
+          return;
+        }
+        const matches = await r.json();
+        matchSelect.innerHTML = '';
+        const defaultOpt = document.createElement('option');
+        defaultOpt.value = "";
+        defaultOpt.disabled = true;
+        defaultOpt.selected = true;
+        defaultOpt.textContent = 'Choose Match';
+        matchSelect.appendChild(defaultOpt);
+        
+        matches.forEach((m, i) => {
+          const o = document.createElement('option');
+          o.value = i;
+          o.textContent = m.teams.home + ' vs ' + m.teams.away;
+          o.dataset.home = m.teams.home;
+          o.dataset.away = m.teams.away;
+          o.dataset.homeScore = m.scores.home;
+          o.dataset.awayScore = m.scores.away;
+          matchSelect.appendChild(o);
+        });
+        // Remove the "hidden" class to show the container
+        matchSelectContainer.classList.remove('hidden');
+        matchSelectContainer.classList.add('animate-in');
+        setTimeout(() => {
+          matchSelectContainer.classList.remove('animate-in');
+        }, 500);
+      });
+
+      // Game selection in modal
+      const setGameBtn = document.getElementById('setGameBtn');
+      setGameBtn.addEventListener('click', async () => {
+        const leagueId = leagueSelect.value;
+        const matchIndex = matchSelect.value;
+        if (!leagueId || matchIndex === "") {
+          notification.textContent = "Please select a league and match.";
+          notification.style.display = 'block';
+          setTimeout(() => { notification.style.display = 'none'; }, 3000);
+          return;
+        }
+        const res = await fetch('/setGame', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ leagueId, matchIndex: parseInt(matchIndex) })
+        });
+        const data = await res.json();
+        if (data.success) {
+          notification.textContent = "Game updated successfully.";
+          notification.style.display = 'block';
+          setTimeout(() => { notification.style.display = 'none'; }, 3000);
+          modal.style.display = 'none';
+          // Reload page to update preview and controls
+          location.reload();
+        } else {
+          notification.textContent = "Failed to update selected game.";
+          notification.style.display = 'block';
+          setTimeout(() => { notification.style.display = 'none'; }, 3000);
+        }
+      });
+
+      // Timer controls and preview update
+      const previewTimer = document.getElementById('previewTimer');
+      function fetchTimer() {
+        fetch('/timer')
+          .then(res => res.json())
+          .then(data => {
+            let seconds = Math.floor(data.currentTime);
+            const mm = String(Math.floor(seconds / 60)).padStart(2, '0');
+            const ss = String(seconds % 60).padStart(2, '0');
+            previewTimer.textContent = mm + ':' + ss;
+          });
+      }
+      setInterval(fetchTimer, 1000);
+      fetchTimer();
+
+      const timerModeRadios = document.getElementsByName('timerMode');
+      const presetGroup = document.getElementById('presetGroup');
+      const presetInput = document.getElementById('presetInput');
+      const setPresetBtn = document.getElementById('setPreset');
+      const startTimerBtn = document.getElementById('startTimer');
+      const pauseTimerBtn = document.getElementById('pauseTimer');
+      const resetTimerBtn = document.getElementById('resetTimer');
+
+      timerModeRadios.forEach(radio => {
+        radio.addEventListener('change', () => {
+          const mode = radio.value;
+          fetch('/timer', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ action: 'setMode', mode })
+          });
+          presetGroup.style.display = mode === 'countdown' ? 'block' : 'none';
+        });
+      });
+
+      setPresetBtn.addEventListener('click', () => {
+        const presetStr = presetInput.value.trim();
+        const parts = presetStr.split(':');
+        if (parts.length !== 2) {
+          alert("Preset must be in mm:ss format");
+          return;
+        }
+        const minutes = parseInt(parts[0], 10);
+        const seconds = parseInt(parts[1], 10);
+        if (isNaN(minutes) || isNaN(seconds)) {
+          alert("Invalid mm:ss format");
+          return;
+        }
+        const presetSeconds = minutes * 60 + seconds;
+        fetch('/timer', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ action: 'setPreset', preset: presetSeconds })
+        });
+      });
+
+      startTimerBtn.addEventListener('click', () => {
+        fetch('/timer', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ action: 'start' })
+        });
+      });
+      pauseTimerBtn.addEventListener('click', () => {
+        fetch('/timer', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ action: 'pause' })
+        });
+      });
+      resetTimerBtn.addEventListener('click', () => {
+        fetch('/timer', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ action: 'reset' })
+        });
+      });
+
+      // Dynamic preview: poll /state every 5 seconds to update preview if state changes
+      async function updatePreview() {
+        try {
+          const res = await fetch('/state');
+          const state = await res.json();
+          if (state.selectedGame) {
+            const { leagueId, matchIndex } = state.selectedGame;
+            const resMatches = await fetch(`/matches/${leagueId}`);
+            const matches = await resMatches.json();
+            const match = matches[matchIndex];
+            if (match) {
+              document
+                .getElementById('previewHome')
+                .querySelector('h2')
+                .textContent = formatTeam(match.teams.home);
+              document.getElementById('previewHomeScore').textContent = match.scores.home;
+              document
+                .getElementById('previewAway')
+                .querySelector('h2')
+                .textContent = formatTeam(match.teams.away);
+              document.getElementById('previewAwayScore').textContent = match.scores.away;
+            }
+          } else {
+            document.getElementById('previewHome').querySelector('h2').textContent = "Home Team";
+            document.getElementById('previewHomeScore').textContent = "0";
+            document.getElementById('previewAway').querySelector('h2').textContent = "Away Team";
+            document.getElementById('previewAwayScore').textContent = "0";
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      }
+      setInterval(updatePreview, 5000);
+      updatePreview();
+
+      // Updated dynamic team name formatter to output uppercase letters
+      function formatTeam(name) {
+        if (!name) return "";
+        name = name.trim();
+        if (name.toUpperCase().endsWith(" II")) {
+          let main = name.slice(0, -3).trim();
+          return main.substring(0, 3).toUpperCase() + " II";
+        } else {
+          return name.substring(0, 3).toUpperCase();
+        }
+      }
+    </script>
+  </body>
+</html>

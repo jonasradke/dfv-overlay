@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Stream Overlay</title>
+    <style>
+      /* Force black background on html and body */
+      html, body {
+        margin: 0;
+        padding: 0;
+        background: #000000;
+      }
+      /* Define color variables */
+      :root {
+        --team-bg: #0f172a;    /* Team name background */
+        --score-bg: #cbd5e1;   /* Score background */
+        --time-bg: #f9f7f7;    /* Timer (clock) background */
+        --text-color: #0f172a; /* Dark text for score and timer */
+      }
+      /* Global body style */
+      body {
+        font-family: 'Inter', sans-serif;
+        background: #000000;
+      }
+      /* Scoreboard grid positioned at top left with increased margin */
+      .stream-grid {
+        position: absolute;
+        top: 50px;   /* Increased top margin */
+        left: 50px;  /* Increased left margin */
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: auto auto;
+        max-width: 800px;
+        background: transparent;
+      }
+      /* Home team cell */
+      .team-home {
+        grid-column: 1 / 2;
+        grid-row: 1 / 2;
+        background-color: var(--team-bg);
+        color: #fff;
+        padding: 5px;  /* Reduced padding */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+      }
+      /* Score cell - increased font size for bigger score */
+      .score-cell {
+        grid-column: 2 / 3;
+        grid-row: 1 / 2;
+        background-color: var(--score-bg);
+        color: var(--text-color);
+        padding: 5px;  /* Reduced padding */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        font-size: 3rem;
+        font-weight: bold;
+      }
+      /* Dash styling to increase spacing between scores */
+      .dash {
+        margin: 0 10px;
+      }
+      /* Away team cell */
+      .team-away {
+        grid-column: 3 / 4;
+        grid-row: 1 / 2;
+        background-color: var(--team-bg);
+        color: #fff;
+        padding: 5px;  /* Reduced padding */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+      }
+      /* Timer cell: placed exactly below the score cell */
+      .timer-cell {
+        grid-column: 2 / 3;
+        grid-row: 2 / 3;
+        width: 100%;
+      }
+      /* Clock style: same width as score cell, using the specified time background color */
+      .clock {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        background-color: var(--time-bg);
+        color: var(--text-color);
+        padding: 5px;  /* Reduced padding */
+        font-size: 2rem;
+        font-weight: bold;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <% 
+      // Helper function to format team names:
+      // Show only the first three letters (in uppercase) unless the name ends with " II"
+      // (case-insensitive), in which case preserve the " II" after the first three uppercase letters.
+      function formatTeam(name) {
+        if (!name) return "";
+        name = name.trim();
+        if (name.toUpperCase().endsWith(" II")) {
+          let main = name.slice(0, -3).trim();
+          return main.substring(0, 3).toUpperCase() + " II";
+        } else {
+          return name.substring(0, 3).toUpperCase();
+        }
+      }
+    %>
+    <div class="stream-grid">
+      <% if (match) { %>
+        <div class="team-home">
+          <h2><%= formatTeam(match.teams.home) %></h2>
+        </div>
+        <div class="score-cell">
+          <span id="homeScore"><%= match.scores.home %></span>
+          <span class="dash">–</span>
+          <span id="awayScore"><%= match.scores.away %></span>
+        </div>
+        <div class="team-away">
+          <h2><%= formatTeam(match.teams.away) %></h2>
+        </div>
+      <% } else { %>
+        <div class="team-home">
+          <h2>Select Game</h2>
+        </div>
+        <div class="score-cell">
+          <span id="homeScore"></span>
+          <span class="dash">–</span>
+          <span id="awayScore"></span>
+        </div>
+        <div class="team-away">
+          <h2></h2>
+        </div>
+      <% } %>
+      <div class="timer-cell">
+        <div class="clock" id="streamTimer">00:00</div>
+      </div>
+    </div>
+    <script>
+      // Update the timer every second
+      function updateTimer() {
+        fetch('/timer')
+          .then(res => res.json())
+          .then(data => {
+            let seconds = Math.floor(data.currentTime);
+            const mm = String(Math.floor(seconds / 60)).padStart(2, '0');
+            const ss = String(seconds % 60).padStart(2, '0');
+            document.getElementById('streamTimer').textContent = mm + ':' + ss;
+          })
+          .catch(err => console.error(err));
+      }
+      setInterval(updateTimer, 1000);
+      updateTimer();
+
+      // Poll server state every 5 seconds to update the overlay dynamically
+      async function updateOverlay() {
+        try {
+          const res = await fetch('/state');
+          const state = await res.json();
+          if (state.selectedGame) {
+            const { leagueId, matchIndex } = state.selectedGame;
+            const resMatches = await fetch(`/matches/${leagueId}`);
+            const matches = await resMatches.json();
+            const match = matches[matchIndex];
+            if (match) {
+              document.querySelector('.team-home h2').textContent = formatTeam(match.teams.home);
+              document.querySelector('.score-cell').innerHTML = `<span id="homeScore">${match.scores.home}</span><span class="dash">–</span><span id="awayScore">${match.scores.away}</span>`;
+              document.querySelector('.team-away h2').textContent = formatTeam(match.teams.away);
+            }
+          } else {
+            document.querySelector('.team-home h2').textContent = "Select Game";
+            document.querySelector('.score-cell').innerHTML = `<span id="homeScore"></span><span class="dash">–</span><span id="awayScore"></span>`;
+            document.querySelector('.team-away h2').textContent = "";
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      }
+      setInterval(updateOverlay, 5000);
+      updateOverlay();
+
+      // Team name formatter for dynamic updates (re-declare the same function)
+      function formatTeam(name) {
+        if (!name) return "";
+        name = name.trim();
+        if (name.toUpperCase().endsWith(" II")) {
+          let main = name.slice(0, -3).trim();
+          return main.substring(0, 3).toUpperCase() + " II";
+        } else {
+          return name.substring(0, 3).toUpperCase();
+        }
+      }
+    </script>
+  </body>
+</html>
