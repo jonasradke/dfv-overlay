@@ -4,11 +4,17 @@
     <meta charset="UTF-8" />
     <title>Control</title>
     <style>
-      /* Base Variables */
+      /* Base Variables and Theme Variants */
       :root {
-        --bg: #111;
-        --container-bg: rgba(17, 17, 17, 0.95);
-        --text-color: #f0f0f0;
+        /* Dark Mode Variables */
+        --bg-dark: #111;
+        --container-bg-dark: rgba(17, 17, 17, 0.95);
+        --text-color-dark: #f0f0f0;
+        /* Light Mode Variables */
+        --bg-light: #ffffff;
+        --container-bg-light: #f5f5f5;
+        --text-color-light: #111;
+        /* Shared Variables */
         --input-bg: #222;
         --input-border: #444;
         --primary-btn: #0070f3;
@@ -26,29 +32,89 @@
         --timer-bg: #f9f7f7;
         --control-panel-bg: rgba(17, 17, 17, 0.9);
       }
+
       /* Global Styles */
       body {
         margin: 0;
         height: 100vh;
         width: 100vw;
         font-family: 'Inter', sans-serif;
-        color: var(--text-color);
-        background: var(--bg);
-        overflow: auto;
+        overflow: hidden; /* Prevent scrolling */
         position: relative;
         font-size: 16px;
+        transition: background 0.3s, color 0.3s;
       }
+      body.dark-mode {
+        background: var(--bg-dark);
+        color: var(--text-color-dark);
+      }
+      body.light-mode {
+        background: var(--bg-light);
+        color: var(--text-color-light);
+      }
+
+      /* Notification Container */
+      #notificationContainer {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      /* Notification Style */
+      .notification {
+        background-color: var(--primary-btn);
+        color: #fff;
+        padding: 10px 15px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        font-size: 1rem;
+        margin-bottom: 10px;
+        opacity: 0;
+        transform: translateY(-20px);
+        animation: fadeIn 0.5s forwards;
+      }
+      /* When sliding up to hide */
+      .slide-up {
+        animation: slideUp 0.7s forwards;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes slideUp {
+        from { opacity: 1; transform: translateY(0); }
+        to { opacity: 0; transform: translateY(-20px); }
+      }
+
+      /* Wrapper for the windows (Main Control, Timer Controls, Team Color Controls) */
+      .window-container {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        align-items: flex-start;
+        padding: 20px;
+        box-sizing: border-box;
+      }
+
+      /* Vercel Container – Main Control Window */
       .vercel-container {
-        max-width: 1000px;
-        margin: 40px auto;
-        padding: 30px;
-        background: var(--container-bg);
-        border-radius: 16px;
-        box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+        flex: 1 1 60%;
+        max-width: 960px;
+        padding: 2rem;
+        background: var(--container-bg-dark);
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         text-align: center;
         position: relative;
         z-index: 1;
         animation: fadeInPage 0.7s ease-out;
+        transition: background 0.3s, box-shadow 0.3s;
+      }
+      body.light-mode .vercel-container {
+        background: var(--container-bg-light);
       }
       @keyframes fadeInPage {
         from { opacity: 0; transform: translateY(10px); }
@@ -59,80 +125,55 @@
         font-size: 2.5rem;
         font-weight: 600;
       }
-      .toggle-btn {
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        background: var(--primary-btn);
-        border: none;
-        border-radius: 8px;
-        color: #fff;
-        padding: 10px 16px;
-        cursor: pointer;
-        font-size: 1rem;
-        transition: background-color 0.2s ease, transform 0.2s ease;
-        z-index: 2;
-      }
-      .toggle-btn:hover {
-        background: var(--primary-btn-hover);
-        transform: scale(1.05);
-      }
-      /* Preview Window (mirrors stream overlay) */
-      .preview-window {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        grid-template-rows: auto auto;
-        width: 100%;
+
+      /* Preview Area inside the Main Control Window */
+      #previewArea {
+        margin: 20px auto;
         max-width: 800px;
-        margin: 0 auto;
+        background: var(--container-bg-dark);
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        overflow: hidden;
+        transition: background 0.3s, box-shadow 0.3s;
       }
-      .preview-window .team,
-      .preview-window .score {
-        padding: 10px;
+      body.light-mode #previewArea {
+        background: var(--container-bg-light);
+      }
+      #previewArea h2 {
         margin: 0;
-        border-radius: 0;
-        text-align: center;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .preview-window .team {
-        background-color: var(--team-bg);
+        padding: 10px;
+        background: var(--primary-btn);
         color: #fff;
         font-size: 1.5rem;
-      }
-      .preview-window .score {
-        background-color: var(--score-bg);
-        color: var(--team-bg);
-        font-size: 2rem;
-        font-weight: bold;
-      }
-      .preview-window .timer {
-        grid-column: 2 / 3;
-        grid-row: 2 / 3;
-        width: 100%;
-      }
-      .preview-window .clock {
-        background-color: var(--timer-bg);
-        color: var(--team-bg);
-        padding: 10px;
-        font-size: 1.8rem;
         text-align: center;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 0;
+      }
+      #previewArea iframe {
         width: 100%;
+        height: 500px; /* Adjust as needed */
+        border: none;
+        scrolling: no;
       }
-      /* Timer Controls (only if a game is selected) */
-      .timer-controls {
-        margin-top: 20px;
-        animation: fadeInControls 0.5s ease-out 0.5s forwards;
+
+      /* Timer Controls Window */
+      .timer-container {
+        flex: 1 1 35%;
+        max-width: 400px;
+        padding: 20px;
+        background: var(--container-bg-dark);
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        transition: background 0.3s;
       }
-      @keyframes fadeInControls {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
+      body.light-mode .timer-container {
+        background: var(--container-bg-light);
       }
+      .timer-container h2 {
+        margin: 0 0 10px 0;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--primary-btn);
+        font-size: 1.5rem;
+      }
+      /* Timer Controls Form Styles */
       .form-group {
         margin-bottom: 20px;
         text-align: left;
@@ -149,7 +190,7 @@
         width: 100%;
         padding: 14px 12px;
         background-color: var(--input-bg);
-        color: var(--text-color);
+        color: var(--text-color-dark);
         border: 1px solid var(--input-border);
         border-radius: 8px;
         font-size: 1rem;
@@ -161,7 +202,6 @@
         border-color: var(--primary-btn);
         outline: none;
       }
-      /* Action Buttons */
       .action-btn, .open-modal-btn {
         padding: 14px 28px;
         font-size: 1.1rem;
@@ -212,6 +252,47 @@
         transition: background-color 0.2s ease;
         margin-right: 10px;
       }
+
+      /* Team Color Controls Window */
+      .color-container {
+        flex: 1 1 35%;
+        max-width: 400px;
+        padding: 20px;
+        background: var(--container-bg-dark);
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        transition: background 0.3s;
+      }
+      body.light-mode .color-container {
+        background: var(--container-bg-light);
+      }
+      .color-container h2 {
+        margin: 0 0 10px 0;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--primary-btn);
+        font-size: 1.5rem;
+      }
+      .color-container .form-group {
+        margin-bottom: 20px;
+        text-align: left;
+      }
+      .color-container label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        font-size: 1rem;
+      }
+      .color-container input[type="color"] {
+        width: 100%;
+        height: 50px;
+        border: none;
+        padding: 0;
+        background: none;
+      }
+      .color-container .action-btn {
+        margin-top: 10px;
+      }
+
       /* Modal Styles */
       .modal {
         display: none;
@@ -225,7 +306,7 @@
         background-color: rgba(0,0,0,0.5);
       }
       .modal-content {
-        background-color: var(--container-bg);
+        background-color: var(--container-bg-dark);
         margin: 8% auto;
         padding: 30px;
         border: 1px solid var(--input-border);
@@ -233,17 +314,24 @@
         max-width: 600px;
         text-align: center;
         animation: fadeInModal 0.5s ease-out;
+        transition: background 0.3s;
+      }
+      body.light-mode .modal-content {
+        background-color: var(--container-bg-light);
       }
       @keyframes fadeInModal {
         from { opacity: 0; transform: scale(0.95); }
         to { opacity: 1; transform: scale(1); }
       }
       .close {
-        color: var(--text-color);
+        color: var(--text-color-dark);
         float: right;
         font-size: 1.8rem;
         font-weight: bold;
         cursor: pointer;
+      }
+      body.light-mode .close {
+        color: var(--text-color-light);
       }
       .close:hover,
       .close:focus {
@@ -251,30 +339,86 @@
         text-decoration: none;
       }
       .notification {
-        margin-top: 15px;
-        padding: 10px;
-        font-size: 1rem;
         background-color: var(--primary-btn);
         color: #fff;
-        border-radius: 6px;
-        display: none;
-      }
-      .animate-in {
-        animation: fadeIn 0.5s ease-out;
+        padding: 10px 15px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        font-size: 1rem;
+        margin-bottom: 10px;
+        opacity: 0;
+        transform: translateY(-20px);
+        animation: fadeIn 0.5s forwards;
       }
       @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(-10px); }
+        from { opacity: 0; transform: translateY(-20px); }
         to { opacity: 1; transform: translateY(0); }
       }
-      /* Utility class to hide elements */
-      .hidden {
-        display: none;
+      .slide-up {
+        animation: slideUp 0.7s forwards;
+      }
+      @keyframes slideUp {
+        from { opacity: 1; transform: translateY(0); }
+        to { opacity: 0; transform: translateY(-20px); }
+      }
+
+      /* Footer Styles */
+      footer {
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+        background: var(--container-bg-dark);
+        color: var(--text-color-dark);
+        text-align: center;
+        padding: 10px;
+        font-size: 1rem;
+        box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.3);
+        transition: background 0.3s, color 0.3s;
+      }
+      body.light-mode footer {
+        background: var(--container-bg-light);
+        color: var(--text-color-light);
+      }
+      footer a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      /* Responsive Styles */
+      @media (max-width: 768px) {
+        .window-container {
+          flex-direction: column;
+          align-items: center;
+        }
+        .vercel-container,
+        .timer-container,
+        .color-container {
+          flex: 1 1 100%;
+          max-width: 100%;
+        }
+        #previewArea iframe {
+          height: 300px;
+        }
+        .action-btn, .open-modal-btn {
+          padding: 10px 20px;
+          font-size: 1rem;
+          margin-top: 10px;
+        }
+        .modal-content {
+          margin: 10% auto;
+          padding: 20px;
+          max-width: 90%;
+        }
+        footer {
+          font-size: 0.9rem;
+          padding: 5px;
+        }
       }
     </style>
   </head>
-  <body>
+  <body class="dark-mode">
     <% 
-      // Modified helper: abbreviate team name to first three letters (preserve " II" if present) in uppercase
+      // Helper: abbreviate team name to first three letters (preserve " II" if present) in uppercase.
       function formatTeam(name) {
         if (!name) return "";
         name = name.trim();
@@ -285,66 +429,68 @@
           return name.substring(0, 3).toUpperCase();
         }
       }
-
-      // Safely define a local variable for 'match' so we don't reference an undefined variable
+      // Safely define a local variable for 'match'
       let myMatch = (typeof match !== "undefined" && match) ? match : null;
     %>
     
-    <!-- Toggle Theme Button (so themeToggle is not null) -->
-    <button class="toggle-btn" id="themeToggle">Toggle Theme</button>
+    <!-- Notification container -->
+    <div id="notificationContainer"></div>
     
-    <div class="vercel-container">
-      <h1>Control</h1>
-      
-      <!-- Preview Window (mirrors stream overlay) -->
-      <div id="previewArea">
+    <div class="window-container">
+      <div class="vercel-container">
+        <h1>Control</h1>
+        
+        <!-- Preview Area: Only display if a game is selected -->
         <% if (selectedGame) { %>
-          <div class="preview-window">
-            <div class="team" id="previewHome">
-              <h2><%= formatTeam(myMatch ? myMatch.teams.home : "Home Team") %></h2>
-            </div>
-            <div class="score">
-              <span id="previewHomeScore"><%= myMatch ? myMatch.scores.home : "0" %></span> –
-              <span id="previewAwayScore"><%= myMatch ? myMatch.scores.away : "0" %></span>
-            </div>
-            <div class="team" id="previewAway">
-              <h2><%= formatTeam(myMatch ? myMatch.teams.away : "Away Team") %></h2>
-            </div>
-            <div class="timer">
-              <div class="clock" id="previewTimer">00:00</div>
-            </div>
-          </div>
-        <% } else { %>
-          <p>No game selected.</p>
-        <% } %>
-      </div>
-
-      <!-- Timer Controls (only shown if a game is selected) -->
-      <% if (selectedGame) { %>
-        <div class="timer-controls">
-          <h2>Timer Controls</h2>
-          <div class="form-group">
-            <label>Mode:</label>
-            <label><input type="radio" name="timerMode" value="countdown" checked /> Count Down</label>
-            <label><input type="radio" name="timerMode" value="countup" /> Count Up</label>
-          </div>
-          <div class="form-group" id="presetGroup">
-            <label for="presetInput">Countdown Preset (mm:ss):</label>
-            <input type="text" id="presetInput" value="05:00" />
-            <button id="setPreset" class="action-btn preset-btn">Set Preset</button>
-          </div>
-          <div class="form-group timer-buttons">
-            <button id="startTimer" class="action-btn start-btn">Start</button>
-            <button id="pauseTimer" class="action-btn pause-btn">Pause</button>
-            <button id="resetTimer" class="action-btn reset-btn">Reset</button>
-          </div>
+        <div id="previewArea">
+          <h2>Stream Preview</h2>
+          <iframe id="streamPreview" src="/stream" scrolling="no" style="width: 100%; height: 500px;"></iframe>
         </div>
+        <% } %>
+        
+        <!-- Open Modal Button -->
+        <button id="openModalBtn" class="open-modal-btn">
+          <%= selectedGame ? "Change Game" : "Select Game" %>
+        </button>
+      </div>
+      
+      <!-- Timer Controls as a Separate Window (only shown if a game is selected) -->
+      <% if (selectedGame) { %>
+      <div class="timer-container">
+        <h2>Timer Controls</h2>
+        <div class="form-group">
+          <label>Mode:</label>
+          <label><input type="radio" name="timerMode" value="countdown" checked /> Count Down</label>
+          <label><input type="radio" name="timerMode" value="countup" /> Count Up</label>
+        </div>
+        <div class="form-group" id="presetGroup">
+          <label for="presetInput">Countdown Preset (mm:ss):</label>
+          <input type="text" id="presetInput" value="05:00" />
+          <button id="setPreset" class="action-btn preset-btn">Set Preset</button>
+        </div>
+        <div class="form-group timer-buttons">
+          <button id="startTimer" class="action-btn start-btn">Start</button>
+          <button id="pauseTimer" class="action-btn pause-btn">Pause</button>
+          <button id="resetTimer" class="action-btn reset-btn">Reset</button>
+        </div>
+      </div>
       <% } %>
-
-      <!-- Open Modal Button -->
-      <button id="openModalBtn" class="open-modal-btn">
-        <%= selectedGame ? "Change Game" : "Select Game" %>
-      </button>
+      
+      <!-- Team Color Controls Window (only shown if a game is selected) -->
+      <% if (selectedGame) { %>
+      <div class="color-container">
+        <h2>Team Color Controls</h2>
+        <div class="form-group">
+          <label for="homeColorInput">Home Team Color:</label>
+          <input type="color" id="homeColorInput" value="#0f172a">
+        </div>
+        <div class="form-group">
+          <label for="awayColorInput">Away Team Color:</label>
+          <input type="color" id="awayColorInput" value="#cbd5e1">
+        </div>
+        <button id="setColorBtn" class="action-btn preset-btn">Set Colors</button>
+      </div>
+      <% } %>
     </div>
 
     <!-- Modal Popup for Game Selection -->
@@ -373,12 +519,38 @@
       </div>
     </div>
 
+    <footer>
+      <label class="switch">
+        <input type="checkbox" id="themeToggle">
+        <span class="slider"></span>
+      </label>
+      <span>Toggle Theme</span>
+      <br>
+      <span>Made by: <a href="mailto:web@jonasradke.com" target="_blank">Jonas Radke</a></span>
+    </footer>
+
     <script>
+      // Custom notification function: create, animate, and stack notifications.
+      function showNotification(msg) {
+        const container = document.getElementById('notificationContainer');
+        const notif = document.createElement('div');
+        notif.className = 'notification';
+        notif.textContent = msg;
+        container.appendChild(notif);
+        // Let the notification display for 5 seconds, then slide up and remove.
+        setTimeout(() => {
+          notif.classList.add('slide-up');
+          setTimeout(() => {
+            container.removeChild(notif);
+          }, 700);
+        }, 5000);
+      }
+
       // Modal handling
       const modal = document.getElementById('modal');
       const openModalBtn = document.getElementById('openModalBtn');
       const closeModalBtn = document.getElementById('closeModalBtn');
-      const notification = document.getElementById('notification');
+      const notificationEl = document.getElementById('notification');
 
       openModalBtn.addEventListener('click', () => {
         modal.style.display = 'block';
@@ -392,8 +564,7 @@
         }
       });
 
-      // THEME TOGGLE CODE
-      // -----------------
+      // THEME TOGGLE CODE WITH SYSTEM MODE DETECTION
       const themeToggle = document.getElementById('themeToggle');
       function applyTheme(theme) {
         document.body.classList.remove('light-mode', 'dark-mode');
@@ -402,9 +573,18 @@
       const storedTheme = localStorage.getItem('theme');
       if (storedTheme) {
         applyTheme(storedTheme);
+        themeToggle.checked = (storedTheme === 'dark-mode');
+      } else {
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          applyTheme('dark-mode');
+          themeToggle.checked = true;
+        } else {
+          applyTheme('light-mode');
+          themeToggle.checked = false;
+        }
       }
-      themeToggle.addEventListener('click', () => {
-        if (document.body.classList.contains('light-mode')) {
+      themeToggle.addEventListener('change', () => {
+        if (themeToggle.checked) {
           applyTheme('dark-mode');
           localStorage.setItem('theme', 'dark-mode');
         } else {
@@ -417,7 +597,6 @@
       const leagueSelect = document.getElementById('leagueSelect');
       const matchSelect = document.getElementById('matchSelect');
       const matchSelectContainer = document.getElementById('matchSelectContainer');
-
       leagueSelect.addEventListener('change', async () => {
         matchSelect.innerHTML = '<option disabled selected>Loading...</option>';
         const r = await fetch(`/matches/${leagueSelect.value}`);
@@ -433,7 +612,6 @@
         defaultOpt.selected = true;
         defaultOpt.textContent = 'Choose Match';
         matchSelect.appendChild(defaultOpt);
-        
         matches.forEach((m, i) => {
           const o = document.createElement('option');
           o.value = i;
@@ -444,7 +622,6 @@
           o.dataset.awayScore = m.scores.away;
           matchSelect.appendChild(o);
         });
-        // Remove the "hidden" class to show the container
         matchSelectContainer.classList.remove('hidden');
         matchSelectContainer.classList.add('animate-in');
         setTimeout(() => {
@@ -458,9 +635,7 @@
         const leagueId = leagueSelect.value;
         const matchIndex = matchSelect.value;
         if (!leagueId || matchIndex === "") {
-          notification.textContent = "Please select a league and match.";
-          notification.style.display = 'block';
-          setTimeout(() => { notification.style.display = 'none'; }, 3000);
+          showNotification("Please select a league and match.");
           return;
         }
         const res = await fetch('/setGame', {
@@ -470,21 +645,16 @@
         });
         const data = await res.json();
         if (data.success) {
-          notification.textContent = "Game updated successfully.";
-          notification.style.display = 'block';
-          setTimeout(() => { notification.style.display = 'none'; }, 3000);
+          showNotification("Game updated successfully.");
           modal.style.display = 'none';
-          // Reload page to update preview and controls
           location.reload();
         } else {
-          notification.textContent = "Failed to update selected game.";
-          notification.style.display = 'block';
-          setTimeout(() => { notification.style.display = 'none'; }, 3000);
+          showNotification("Failed to update selected game.");
         }
       });
 
       // Timer controls and preview update
-      const previewTimer = document.getElementById('previewTimer');
+      const previewTimer = document.getElementById('streamTimer');
       function fetchTimer() {
         fetch('/timer')
           .then(res => res.json())
@@ -522,13 +692,13 @@
         const presetStr = presetInput.value.trim();
         const parts = presetStr.split(':');
         if (parts.length !== 2) {
-          alert("Preset must be in mm:ss format");
+          showNotification("Preset must be in mm:ss format");
           return;
         }
         const minutes = parseInt(parts[0], 10);
         const seconds = parseInt(parts[1], 10);
         if (isNaN(minutes) || isNaN(seconds)) {
-          alert("Invalid mm:ss format");
+          showNotification("Invalid mm:ss format");
           return;
         }
         const presetSeconds = minutes * 60 + seconds;
@@ -561,6 +731,32 @@
         });
       });
 
+      // Team Color Controls: Handle color changes without refreshing the page.
+      const setColorBtn = document.getElementById('setColorBtn');
+      if (setColorBtn) {
+        setColorBtn.addEventListener('click', () => {
+          const homeColor = document.getElementById('homeColorInput').value;
+          const awayColor = document.getElementById('awayColorInput').value;
+          fetch('/setTeamColor', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ homeColor, awayColor })
+          })
+            .then(res => res.json())
+            .then(data => {
+              if (data.success) {
+                showNotification("Team colors updated successfully.");
+              } else {
+                showNotification("Failed to update team colors.");
+              }
+            })
+            .catch(err => {
+              console.error(err);
+              showNotification("Error updating team colors.");
+            });
+        });
+      }
+
       // Dynamic preview: poll /state every 5 seconds to update preview if state changes
       async function updatePreview() {
         try {
@@ -572,22 +768,16 @@
             const matches = await resMatches.json();
             const match = matches[matchIndex];
             if (match) {
-              document
-                .getElementById('previewHome')
-                .querySelector('h2')
-                .textContent = formatTeam(match.teams.home);
-              document.getElementById('previewHomeScore').textContent = match.scores.home;
-              document
-                .getElementById('previewAway')
-                .querySelector('h2')
-                .textContent = formatTeam(match.teams.away);
-              document.getElementById('previewAwayScore').textContent = match.scores.away;
+              document.querySelector('.name-team-home h3').textContent = formatTeam(match.teams.home);
+              document.querySelector('.score .score-team-home h3').textContent = match.scores.home;
+              document.querySelector('.score .score-team-away h3').textContent = match.scores.away;
+              document.querySelector('.name-team-away h3').textContent = formatTeam(match.teams.away);
             }
           } else {
-            document.getElementById('previewHome').querySelector('h2').textContent = "Home Team";
-            document.getElementById('previewHomeScore').textContent = "0";
-            document.getElementById('previewAway').querySelector('h2').textContent = "Away Team";
-            document.getElementById('previewAwayScore').textContent = "0";
+            document.querySelector('.name-team-home h3').textContent = "--";
+            document.querySelector('.score .score-team-home h3').textContent = "-";
+            document.querySelector('.score .score-team-away h3').textContent = "-";
+            document.querySelector('.name-team-away h3').textContent = "--";
           }
         } catch (err) {
           console.error(err);
@@ -599,13 +789,7 @@
       // Updated dynamic team name formatter to output uppercase letters
       function formatTeam(name) {
         if (!name) return "";
-        name = name.trim();
-        if (name.toUpperCase().endsWith(" II")) {
-          let main = name.slice(0, -3).trim();
-          return main.substring(0, 3).toUpperCase() + " II";
-        } else {
-          return name.substring(0, 3).toUpperCase();
-        }
+        return name.trim().substring(0, 3).toUpperCase();
       }
     </script>
   </body>

@@ -14,6 +14,10 @@ let serverState = {
     baseTime: 0,      // timestamp when timer started
     elapsed: 0,       // seconds elapsed before current run
     preset: 300       // default 5 minutes (300 seconds)
+  },
+  teamColors: {
+    home: "#0f172a", // default home team color
+    away: "#cbd5e1"  // default away team color
   }
 };
 
@@ -95,6 +99,18 @@ app.post('/timer', (req, res) => {
   });
 });
 
+// NEW: Endpoint to update team colors
+app.post('/setTeamColor', (req, res) => {
+  const { homeColor, awayColor } = req.body;
+  if (!homeColor || !awayColor) {
+    return res.status(400).json({ success: false, error: 'Missing team color(s)' });
+  }
+  // Optionally, add further validation for hex format here.
+  serverState.teamColors.home = homeColor;
+  serverState.teamColors.away = awayColor;
+  res.json({ success: true, teamColors: serverState.teamColors });
+});
+
 // Control page: fetch leagues from external API and pass current selectedGame
 app.get('/control', async (req, res) => {
   try {
@@ -128,20 +144,20 @@ app.get('/matches/:leagueId', async (req, res) => {
   }
 });
 
-// Stream overlay: if no game is selected, render with match: null
+// Stream overlay: if no game is selected, render with match: null and pass teamColors
 app.get('/stream', async (req, res) => {
   if (!serverState.selectedGame) {
-    return res.render('stream', { match: null });
+    return res.render('stream', { match: null, teamColors: serverState.teamColors });
   }
   try {
     const { leagueId, matchIndex } = serverState.selectedGame;
     const r = await fetch(`https://api.syndikat.golf/scores/${leagueId}`);
     const allMatches = await r.json();
     const match = allMatches[matchIndex];
-    res.render('stream', { match: match || null });
+    res.render('stream', { match: match || null, teamColors: serverState.teamColors });
   } catch (err) {
     console.error(err);
-    res.render('stream', { match: null });
+    res.render('stream', { match: null, teamColors: serverState.teamColors });
   }
 });
 
