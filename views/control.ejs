@@ -6,9 +6,9 @@
     <style>
       /* Base Variables and Theme Variants */
       :root {
-        /* Dark Mode Variables */
-        --bg-dark: #111;
-        --container-bg-dark: rgba(17, 17, 17, 0.95);
+        /* Dark Mode Variables – more defined */
+        --bg-dark: #000000;
+        --container-bg-dark: #1a1a1a;
         --text-color-dark: #f0f0f0;
         /* Light Mode Variables */
         --bg-light: #ffffff;
@@ -33,6 +33,30 @@
         --control-panel-bg: rgba(17, 17, 17, 0.9);
       }
 
+      /* Explicitly hide elements with the "hidden" class */
+      .hidden {
+        display: none !important;
+      }
+
+      /* Additional rule for animated match picker */
+      #matchSelectContainer.animate-in {
+        animation: fadeInMatch 0.5s ease-out;
+      }
+      @keyframes fadeInMatch {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      /* Smaller timer preset input and button */
+      #presetInput {
+        padding: 8px 10px;
+        font-size: 0.9rem;
+      }
+      #setPreset {
+        padding: 8px 16px;
+        font-size: 0.9rem;
+      }
+
       /* Global Styles */
       body {
         margin: 0;
@@ -42,18 +66,18 @@
         overflow: hidden; /* Prevent scrolling */
         position: relative;
         font-size: 16px;
-        transition: background 0.3s, color 0.3s;
+        transition: background-color 0.5s ease, color 0.5s ease;
       }
       body.dark-mode {
-        background: var(--bg-dark);
+        background-color: var(--bg-dark);
         color: var(--text-color-dark);
       }
       body.light-mode {
-        background: var(--bg-light);
+        background-color: var(--bg-light);
         color: var(--text-color-light);
       }
 
-      /* Notification Container */
+      /* Global Notification Container */
       #notificationContainer {
         position: fixed;
         top: 10px;
@@ -63,7 +87,6 @@
         flex-direction: column;
         gap: 10px;
       }
-      /* Notification Style */
       .notification {
         background-color: var(--primary-btn);
         color: #fff;
@@ -74,11 +97,10 @@
         margin-bottom: 10px;
         opacity: 0;
         transform: translateY(-20px);
-        animation: fadeIn 0.5s forwards;
+        animation: fadeIn 0.6s ease-out forwards;
       }
-      /* When sliding up to hide */
       .slide-up {
-        animation: slideUp 0.7s forwards;
+        animation: slideUp 0.8s ease-in forwards;
       }
       @keyframes fadeIn {
         from { opacity: 0; transform: translateY(-20px); }
@@ -97,9 +119,11 @@
         align-items: flex-start;
         padding: 20px;
         box-sizing: border-box;
+        overflow-y: auto;
+        max-height: calc(100vh - 60px);
       }
 
-      /* Vercel Container – Main Control Window */
+      /* Main Control Window */
       .vercel-container {
         flex: 1 1 60%;
         max-width: 960px;
@@ -126,7 +150,7 @@
         font-weight: 600;
       }
 
-      /* Preview Area inside the Main Control Window */
+      /* Preview Area */
       #previewArea {
         margin: 20px auto;
         max-width: 800px;
@@ -149,7 +173,7 @@
       }
       #previewArea iframe {
         width: 100%;
-        height: 500px; /* Adjust as needed */
+        height: 500px;
         border: none;
         scrolling: no;
       }
@@ -173,7 +197,6 @@
         border-bottom: 1px solid var(--primary-btn);
         font-size: 1.5rem;
       }
-      /* Timer Controls Form Styles */
       .form-group {
         margin-bottom: 20px;
         text-align: left;
@@ -297,7 +320,7 @@
       .modal {
         display: none;
         position: fixed;
-        z-index: 2000;
+        z-index: 3000; /* Above notifications */
         left: 0;
         top: 0;
         width: 100%;
@@ -338,28 +361,46 @@
         color: var(--primary-btn);
         text-decoration: none;
       }
-      .notification {
-        background-color: var(--primary-btn);
-        color: #fff;
-        padding: 10px 15px;
-        border-radius: 8px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-        font-size: 1rem;
-        margin-bottom: 10px;
+      
+      /* Improved Slider Toggle Styles for Theme */
+      .switch {
+        position: relative;
+        display: inline-block;
+        width: 60px;
+        height: 34px;
+      }
+      .switch input {
         opacity: 0;
-        transform: translateY(-20px);
-        animation: fadeIn 0.5s forwards;
+        width: 0;
+        height: 0;
       }
-      @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(-20px); }
-        to { opacity: 1; transform: translateY(0); }
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #bbb;
+        transition: background-color 0.4s ease;
+        border-radius: 34px;
       }
-      .slide-up {
-        animation: slideUp 0.7s forwards;
+      .slider:before {
+        position: absolute;
+        content: "";
+        height: 26px;
+        width: 26px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: transform 0.4s ease;
+        border-radius: 50%;
       }
-      @keyframes slideUp {
-        from { opacity: 1; transform: translateY(0); }
-        to { opacity: 0; transform: translateY(-20px); }
+      .switch input:checked + .slider {
+        background-color: var(--primary-btn);
+      }
+      .switch input:checked + .slider:before {
+        transform: translateX(26px);
       }
 
       /* Footer Styles */
@@ -414,6 +455,16 @@
           padding: 5px;
         }
       }
+      @media (max-width: 480px) {
+        h1 {
+          font-size: 2rem;
+        }
+        #previewArea h2,
+        .timer-container h2,
+        .color-container h2 {
+          font-size: 1.3rem;
+        }
+      }
     </style>
   </head>
   <body class="dark-mode">
@@ -433,7 +484,7 @@
       let myMatch = (typeof match !== "undefined" && match) ? match : null;
     %>
     
-    <!-- Notification container -->
+    <!-- Global Notification container -->
     <div id="notificationContainer"></div>
     
     <div class="window-container">
@@ -454,7 +505,7 @@
         </button>
       </div>
       
-      <!-- Timer Controls as a Separate Window (only shown if a game is selected) -->
+      <!-- Timer Controls Window (only shown if a game is selected) -->
       <% if (selectedGame) { %>
       <div class="timer-container">
         <h2>Timer Controls</h2>
@@ -492,7 +543,7 @@
       </div>
       <% } %>
     </div>
-
+    
     <!-- Modal Popup for Game Selection -->
     <div id="modal" class="modal">
       <div class="modal-content">
@@ -507,7 +558,7 @@
             <% }) %>
           </select>
         </div>
-        <!-- Hidden by default; shown when a league is selected -->
+        <!-- The match selection only appears once a league is selected -->
         <div class="form-group hidden" id="matchSelectContainer">
           <label for="matchSelect">Pick Match:</label>
           <select id="matchSelect">
@@ -515,11 +566,11 @@
           </select>
         </div>
         <button id="setGameBtn" class="action-btn">Set Game</button>
-        <div id="notification" class="notification"></div>
       </div>
     </div>
-
+    
     <footer>
+      <!-- Improved Theme Toggle as a Slider -->
       <label class="switch">
         <input type="checkbox" id="themeToggle">
         <span class="slider"></span>
@@ -528,7 +579,7 @@
       <br>
       <span>Made by: <a href="mailto:web@jonasradke.com" target="_blank">Jonas Radke</a></span>
     </footer>
-
+    
     <script>
       // Custom notification function: create, animate, and stack notifications.
       function showNotification(msg) {
@@ -542,16 +593,15 @@
           notif.classList.add('slide-up');
           setTimeout(() => {
             container.removeChild(notif);
-          }, 700);
+          }, 800);
         }, 5000);
       }
-
+      
       // Modal handling
       const modal = document.getElementById('modal');
       const openModalBtn = document.getElementById('openModalBtn');
       const closeModalBtn = document.getElementById('closeModalBtn');
-      const notificationEl = document.getElementById('notification');
-
+      
       openModalBtn.addEventListener('click', () => {
         modal.style.display = 'block';
       });
@@ -563,8 +613,8 @@
           modal.style.display = 'none';
         }
       });
-
-      // THEME TOGGLE CODE WITH SYSTEM MODE DETECTION
+      
+      // Improved Theme Toggle Code with Smooth Transitions
       const themeToggle = document.getElementById('themeToggle');
       function applyTheme(theme) {
         document.body.classList.remove('light-mode', 'dark-mode');
@@ -592,12 +642,15 @@
           localStorage.setItem('theme', 'light-mode');
         }
       });
-
-      // Animate in match selection when a league is selected
+      
+      // Animate in match selection when a league is selected.
+      // The match selection container remains hidden until a league is chosen.
       const leagueSelect = document.getElementById('leagueSelect');
       const matchSelect = document.getElementById('matchSelect');
       const matchSelectContainer = document.getElementById('matchSelectContainer');
       leagueSelect.addEventListener('change', async () => {
+        // Hide the match select container until new matches are loaded.
+        matchSelectContainer.classList.add('hidden');
         matchSelect.innerHTML = '<option disabled selected>Loading...</option>';
         const r = await fetch(`/matches/${leagueSelect.value}`);
         if (!r.ok) {
@@ -628,7 +681,7 @@
           matchSelectContainer.classList.remove('animate-in');
         }, 500);
       });
-
+      
       // Game selection in modal
       const setGameBtn = document.getElementById('setGameBtn');
       setGameBtn.addEventListener('click', async () => {
@@ -652,7 +705,7 @@
           showNotification("Failed to update selected game.");
         }
       });
-
+      
       // Timer controls and preview update
       const previewTimer = document.getElementById('streamTimer');
       function fetchTimer() {
@@ -667,7 +720,7 @@
       }
       setInterval(fetchTimer, 1000);
       fetchTimer();
-
+      
       const timerModeRadios = document.getElementsByName('timerMode');
       const presetGroup = document.getElementById('presetGroup');
       const presetInput = document.getElementById('presetInput');
@@ -675,7 +728,7 @@
       const startTimerBtn = document.getElementById('startTimer');
       const pauseTimerBtn = document.getElementById('pauseTimer');
       const resetTimerBtn = document.getElementById('resetTimer');
-
+      
       timerModeRadios.forEach(radio => {
         radio.addEventListener('change', () => {
           const mode = radio.value;
@@ -687,7 +740,7 @@
           presetGroup.style.display = mode === 'countdown' ? 'block' : 'none';
         });
       });
-
+      
       setPresetBtn.addEventListener('click', () => {
         const presetStr = presetInput.value.trim();
         const parts = presetStr.split(':');
@@ -708,7 +761,7 @@
           body: JSON.stringify({ action: 'setPreset', preset: presetSeconds })
         });
       });
-
+      
       startTimerBtn.addEventListener('click', () => {
         fetch('/timer', {
           method: 'POST',
@@ -730,7 +783,7 @@
           body: JSON.stringify({ action: 'reset' })
         });
       });
-
+      
       // Team Color Controls: Handle color changes without refreshing the page.
       const setColorBtn = document.getElementById('setColorBtn');
       if (setColorBtn) {
@@ -756,7 +809,7 @@
             });
         });
       }
-
+      
       // Dynamic preview: poll /state every 5 seconds to update preview if state changes
       async function updatePreview() {
         try {
@@ -785,7 +838,7 @@
       }
       setInterval(updatePreview, 5000);
       updatePreview();
-
+      
       // Updated dynamic team name formatter to output uppercase letters
       function formatTeam(name) {
         if (!name) return "";
